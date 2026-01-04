@@ -1,0 +1,20 @@
+name: release-please
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.head_commit.message, 'Merge pull request')
+    steps:
+      - name: Release Please
+        uses: googleapis/release-please-action@v4
+        with:
+          config-file: .release-please-config.json
