@@ -1,5 +1,9 @@
 use actix_web::{middleware::Logger, web, App, HttpResponse, HttpServer, Responder};
-use rust_host_manager::{build_psk_acceptor, hello_body, Config};
+use rust_host_manager::{
+    build_psk_acceptor, hello_body, service_version, Config, IdentityResponse, HELLO_PATH,
+    IDENTITY_PATH,
+};
+use log::info;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -16,6 +20,13 @@ async fn hello(query: web::Query<HelloQuery>) -> impl Responder {
     }
 }
 
+async fn identity() -> impl Responder {
+    let response = IdentityResponse {
+        service_version: service_version().to_string(),
+    };
+    HttpResponse::Ok().json(response)
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     init_logging();
@@ -30,7 +41,8 @@ async fn main() -> std::io::Result<()> {
     let server = HttpServer::new(|| {
         App::new()
             .wrap(Logger::default())
-            .route("/hello", web::get().to(hello))
+            .route(HELLO_PATH, web::get().to(hello))
+            .route(IDENTITY_PATH, web::get().to(identity))
     });
     let bind_addr = config.bind_addr();
 
@@ -48,11 +60,17 @@ fn init_logging() {
         std::env::set_var("RUST_LOG", "info");
     }
     env_logger::init();
+    info!("service version: {}", service_version());
 }
 
 #[cfg(test)]
 mod tests {
     use super::init_logging;
+    use super::{identity, service_version, IDENTITY_PATH};
+    use actix_web::{http::header, App};
+    use actix_web::test as actix_test;
+    use rust_host_manager::IdentityResponse;
+    use serde_json;
     use std::env;
     use std::sync::{Mutex, OnceLock};
 
@@ -99,5 +117,29 @@ mod tests {
         let _env = EnvVarGuard::new(&[("RUST_LOG", None)]);
         init_logging();
         assert_eq!(env::var("RUST_LOG").ok().as_deref(), Some("info"));
+    }
+
+    #[actix_web::test]
+    async fn identity_returns_service_version_json() {
+        let app = actix_test::init_service(
+            App::new().route(IDENTITY_PATH, actix_web::web::get().to(identity)),
+        )
+        .await;
+        let req = actix_test::TestRequest::get()
+            .uri(IDENTITY_PATH)
+            .to_request();
+        let resp = actix_test::call_service(&app, req).await;
+        assert!(resp.status().is_success());
+
+        let content_type = resp
+            .headers()
+            .get(header::CONTENT_TYPE)
+            .and_then(|value| value.to_str().ok());
+        assert_eq!(content_type, Some("application/json"));
+
+        let body = actix_test::read_body(resp).await;
+        let parsed: IdentityResponse =
+            serde_json::from_slice(&body).expect("identity response json");
+        assert_eq!(parsed.service_version, service_version());
     }
 }

@@ -3,7 +3,9 @@ mod tls;
 
 use std::env;
 
-pub use api::{build_hello_url, hello_body, HELLO_PATH};
+pub use api::{
+    build_hello_url, build_identity_url, hello_body, IdentityResponse, HELLO_PATH, IDENTITY_PATH,
+};
 pub use tls::{build_psk_acceptor, psk_https_get};
 
 #[derive(Debug, Clone)]
@@ -42,6 +44,10 @@ impl Config {
     pub fn bind_addr(&self) -> String {
         format!("{}:{}", self.host, self.port)
     }
+}
+
+pub fn service_version() -> &'static str {
+    env!("CARGO_PKG_VERSION")
 }
 
 #[cfg(test)]
@@ -164,5 +170,10 @@ mod tests {
         let config = Config::from_env().expect("config");
         assert_eq!(config.tls_psk_id.as_deref(), Some("psk-id"));
         assert_eq!(config.tls_psk.as_deref(), Some("secret".as_bytes()));
+    }
+
+    #[test]
+    fn service_version_matches_package_version() {
+        assert_eq!(service_version(), env!("CARGO_PKG_VERSION"));
     }
 }
