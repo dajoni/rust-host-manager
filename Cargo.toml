@@ -1,0 +1,23 @@
+[package]
+name = "rust-host-manager"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+actix-web = { version = "4.5.1", features = ["openssl"] }
+env_logger = "0.11"
+openssl = "0.10"
+reqwest = { version = "0.12", features = ["blocking", "rustls-tls"] }
+serde = { version = "1", features = ["derive"] }
+
+[lib]
+name = "rust_host_manager"
+path = "src/lib.rs"
+
+[[bin]]
+name = "omni-service"
+path = "src/bin/omni_service.rs"
+
+[[bin]]
+name = "omnicli"
+path = "src/bin/omnicli.rs"
