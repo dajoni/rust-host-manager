@@ -16,6 +16,8 @@ Provide a Rust service that runs on a Linux host to manage installed `.deb` pack
 ### Architecture Patterns
 - Separate binaries for service and CLI.
 - Thin handlers with testable core logic.
+- Separate API library for use in service and CLI.
+- All endpoints return well-formatted JSON.
 
 ### Testing Strategy
 - Unit tests for handlers and CLI output.

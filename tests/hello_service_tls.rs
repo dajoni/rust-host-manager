@@ -1,5 +1,5 @@
 use actix_web::{web, App, HttpResponse, HttpServer};
-use rust_host_manager::{build_psk_acceptor, hello_body, psk_https_get};
+use rust_host_manager::{build_psk_acceptor, hello_body, psk_https_get, HELLO_PATH};
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -22,7 +22,7 @@ async fn hello_over_tls_psk() {
     let psk = b"test-psk";
     let acceptor = build_psk_acceptor(id, psk).expect("acceptor");
 
-    let server = HttpServer::new(|| App::new().route("/hello", web::get().to(hello)));
+    let server = HttpServer::new(|| App::new().route(HELLO_PATH, web::get().to(hello)));
     let server = match server.bind_openssl("127.0.0.1:0", acceptor) {
         Ok(server) => server,
         Err(err) if err.kind() == std::io::ErrorKind::PermissionDenied => {
@@ -37,11 +37,7 @@ async fn hello_over_tls_psk() {
     let handle = server.handle();
     actix_web::rt::spawn(server);
 
-    let url = format!(
-        "https://{}:{}/hello?text=hello",
-        addr.ip(),
-        addr.port()
-    );
+    let url = format!("https://{}:{}{}?text=hello", addr.ip(), addr.port(), HELLO_PATH);
     let body = actix_web::rt::task::spawn_blocking(move || psk_https_get(&url, id, psk))
         .await
         .expect("join")

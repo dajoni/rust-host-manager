@@ -1,5 +1,5 @@
 use actix_web::{web, App, HttpResponse, HttpServer, Responder};
-use rust_host_manager::{build_hello_url, build_psk_acceptor, hello_body, psk_https_get};
+use rust_host_manager::{build_hello_url, build_psk_acceptor, hello_body, psk_https_get, HELLO_PATH};
 use serde::Deserialize;
 use std::net::TcpListener;
 use std::time::Duration;
@@ -46,7 +46,7 @@ async fn spawn_psk_server(
     let addr = listener.local_addr().expect("local addr");
     let acceptor = build_psk_acceptor(psk_id, psk).expect("acceptor");
 
-    let server = HttpServer::new(|| App::new().route("/hello", web::get().to(hello)))
+    let server = HttpServer::new(|| App::new().route(HELLO_PATH, web::get().to(hello)))
         .listen_openssl(listener, acceptor)
         .expect("listen")
         .run();
@@ -61,7 +61,7 @@ async fn spawn_plain_server() -> (String, actix_web::dev::ServerHandle) {
     let listener = TcpListener::bind("127.0.0.1:0").expect("bind listener");
     let addr = listener.local_addr().expect("local addr");
 
-    let server = HttpServer::new(|| App::new().route("/hello", web::get().to(hello)))
+    let server = HttpServer::new(|| App::new().route(HELLO_PATH, web::get().to(hello)))
         .listen(listener)
         .expect("listen")
         .run();
