@@ -1,5 +1,7 @@
 # Rust Host Manager
 
+[![tests](https://github.com/dajoni/rust-host-manager/actions/workflows/tests.yml/badge.svg)](https://github.com/dajoni/rust-host-manager/actions/workflows/tests.yml)
+
 ## Run the service (no TLS)
 
 ```bash
