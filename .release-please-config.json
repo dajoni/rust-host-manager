@@ -1,0 +1,5 @@
+{
+  "release-type": "rust",
+  "package-name": "rust-host-manager",
+  "include-v-in-tag": true
+}
